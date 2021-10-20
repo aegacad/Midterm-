@@ -1,0 +1,172 @@
+---
+title: "Code for Midterm"
+author: "Angeline Gacad"
+date: 10/20/21
+output: html_document
+
+so... R keeps giving me this notice that I need to trash the app while I do my
+midterm and isn't opening other rmd or rcode,so I'm using 
+the starbucks activity for Question 4 on the Midterm because my homework files aren't opening at the moment *worriedface*
+---
+```{r}
+
+```
+
+
+
+## A refresher on basic stats tasks in R 
+
+- Installing packages and libraries
+- Reading in files of different types
+- Characterizing the dataset
+- Renaming, cleaning, and creating variables
+- Simple stats (mean, median, etc.)
+
+## Open R studio and let's install some packages and libraries
+```{r}
+## If you receive error messages while installing packages/libraries, see here: https://stackoverflow.com/questions/32932354/how-to-install-the-libraryreadr
+
+#install.packages("foreign") 
+#install.packages("haven") 
+#install.packages("readr") 
+
+library(foreign) #for reading spss (read.spss()), stata (read.dta()) and xpt (read.xport()) files
+library(haven) #for reading SPSS (read_sav()), stata (read_dta()), SAS(read_sas()) and xpt (read_xpt()) files
+library(readr) #for reading csv file (read_csv())
+```
+## Let's read in some different file types {.smaller}
+
+- **NOTE about copying links to datsets housed on Github:** On Github (https://github.com/kijohnson/ADA-Fall-2021) click on the file name you want to import and if it is readable as is (.csv, .txt), click on raw and copy and paste the link into your R code for reading the file. If not readable as is (e.g. .sav, .xpt, .dta), in the gray 'view Raw box', right click and select 'open link in new window' and copy and paste the link address, which should include the following text raw=true at the end of the link.
+
+## read in csv file
+```{r}
+
+starbucks_csv <-
+ read_csv(
+    "https://raw.githubusercontent.com/kijohnson/ADA-Fall-2021/master/Class%201/Class%201%20demo/starbucks_datasets/starbucks_csv.csv"
+  )
+```
+
+## read in stata file
+```{r}
+starbucks_stata <-
+  read_dta(
+    "https://github.com/kijohnson/ADA-Fall-2021/blob/master/Class%201/Class%201%20demo/starbucks_datasets/starbucks_stata.dta?raw=true"
+  )
+```
+
+## read in tab file
+```{r}
+starbucks_tab <-
+  read.delim(
+    "https://raw.githubusercontent.com/kijohnson/ADA-Fall-2021/master/Class%201/Class%201%20demo/starbucks_datasets/starbuckstab_tab.txt"
+  )
+```
+
+## read in SAS XPT file
+```{r}
+starbucks_xpt <-
+  read_xpt(
+    "https://github.com/kijohnson/ADA-Fall-2021/blob/master/Class%201/Class%201%20demo/starbucks_datasets/starbuck_xpt.xpt?raw=true"
+  ) 
+#Interesting note about this format: "The SAS transport format is an open format, as is required for submission of the data to the FDA." (from help page when *??read_xpt* is typed into the console)
+```
+
+## read SPSS file
+```{r}
+starbucks_spss <-
+  read.spss(
+    "https://github.com/kijohnson/ADA-Fall-2021/blob/master/Class%201/Class%201%20demo/starbucks_datasets/starbucks_spss.sav?raw=true", to.data.frame=TRUE
+    )
+```
+
+## Characterize the datasets (no. of obs, variables, basic summary stats, missing data)
+```{r results='asis', echo=TRUE}
+dim(starbucks_xpt) #gives number of rows (observations) and columns (variables)
+
+#basic summary of variable types using str function
+str(starbucks_xpt)
+
+#summary stats
+summary(starbucks_xpt)
+
+#you can also count up number of different types of variables using sapply and table. In sapply we asks for the class of the variables in the starbucks dataset
+sapply(starbucks_xpt, class)
+
+
+#then we ask to put this information in a table. 
+table(sapply(starbucks_xpt, class))
+```
+
+## Renaming variables--Point to remember about renaming: always try to use decriptive names rather than x, y, a, b, c. 
+```{r}
+#Make a list of columnnames
+colnames(starbucks_xpt)
+
+#You do not have to specify [1:7] if you rename all columns
+names(starbucks_xpt)[1:7]<-c("drink", "category", "calories", "fat (g)", "carb. (g)", "fiber (g)", "protein (g)") #renames variables in order of appearance
+#display the change in variable names
+colnames(starbucks_xpt) 
+
+#Suppose I wanted to rename only 1 variable:
+names(starbucks_xpt)[2]<-c("test") #renames variables in order of appearance
+
+#Can also use rename function from plyr package to rename specific variables
+#install.packages("plyr")
+library(plyr)
+starbucks_xpt<-rename(starbucks_xpt, c("test"="category", "calories"="CALORIES"))
+
+starbucks_xpt<-rename(starbucks_xpt, c("CALORIES"="calories"))
+```
+
+## Clean up calories variable/convert to numeric/find simple stats
+```{r, echo=TRUE, warning=FALSE}
+starbucks_xpt$calories_n<-as.numeric(starbucks_xpt$calories) #convert calories variable to numeric so math can be done
+#Note if your variable is imported as a factor variable and you want to convert it to numeric--you MUST first convert it to a character and then to a numeric variable. This is because R will store factor variables at integer levels so if your lowest level is 50 and R will store it as 1. For more on this: https://www.dummies.com/programming/r/how-to-convert-a-factor-in-r/
+class(starbucks_xpt$calories_n)
+
+summary(starbucks_xpt$calories_n) #get summary stats
+mean(starbucks_xpt$calories_n, na.rm=TRUE) #get mean
+median(starbucks_xpt$calories_n, na.rm=TRUE) #get median
+sd(starbucks_xpt$calories_n, na.rm=TRUE) #get sd
+var(starbucks_xpt$calories_n, na.rm=TRUE) #get variance
+quantile(starbucks_xpt$calories_n, na.rm=TRUE) #get quantile
+```
+
+## Categorize calories as above and below the median, label level values
+```{r}
+#at or below median
+starbucks_xpt$calories_med<-ifelse(starbucks_xpt$calories_n<=140, 0, ifelse(starbucks_xpt$calories_n>140, 1, NA))
+#check the type of variable
+class(starbucks_xpt$calories_med) 
+table(starbucks_xpt$calories_med) 
+
+#change to factor variable and label levels
+starbucks_xpt$calories_med.f<-factor(starbucks_xpt$calories_med, levels=c (0,1), labels = c("Below the median", "Above the median")) 
+
+#determine how many observations are in each level using table function
+table(starbucks_xpt$calories_med.f) 
+```
+
+## Find mean number of calories for 'Starbucks Espresso Beverages'
+```{r}
+# Make a data subset of espresso data (I am calling this the child dataframe)
+espresso<-starbucks_xpt[which(starbucks_xpt$category=='Starbucks Espresso Beverages'),] 
+#check that subsetting worked by checking number of espresso drinks in parent dataframe
+table(starbucks_xpt$category)
+
+#check that subsetting worked by checking number of espresso drinks in child dataframe
+dim(espresso) 
+
+#calculate mean number of calories in espresso drinks, removing 'NAs' first. If you don't remove na's, the mean function will not work
+mean(espresso$calories_n, na.rm=TRUE) 
+
+summary(espresso$calories_n) #another way to see the mean number of calories in espresso drinks
+```
+## Changing a value of a variable
+```{r}
+#Suppose I want to change the Brown Sugar Shortbread Latte calories to 300 instead of 380. How would I do that?
+
+#You need to select that observation using the which function and the variable where the value needs to be changed. Reading this code, I select the espresso dataset and the observation where espresso drink = Brown Sugar Shortbread Latte and then the variable calories_n. I assign it a new value to the left of the <- (in R this means =, you can actually use = instead)
+espresso[which(espresso$drink=='Brown Sugar Shortbread Latte'),]$calories_n<-300
+```
