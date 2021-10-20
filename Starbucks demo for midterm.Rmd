@@ -8,12 +8,24 @@ so... R keeps giving me this notice that I need to trash the app while I do my
 midterm and isn't opening other rmd or rcode,so I'm using 
 the starbucks activity for Question 4 on the Midterm because my homework files aren't opening at the moment *worriedface*
 ---
+changes for midter
+--
 ```{r}
-
+BRFSS2017_10percent <- read.csv("~/Downloads/BRFSS2017_10percent_v.txt")
 ```
+b.) Determine the heights by SEX
+```{r}
+BRFSS_Female<-BRFSS2017_10percent[which(BRFSS2017_10percent$SEX==2),]
+mean(BRFSS_Female$ht_meters, na.rm = TRUE)
+```
+[1] 1.631513
+```{r}
+BRFSS_Male<-BRFSS2017_10percent[which(BRFSS2017_10percent$SEX==1),]
+mean(BRFSS_Male$ht_meters, na.rm = TRUE)
+```
+[1] 1.781511
 
-
-
+------
 ## A refresher on basic stats tasks in R 
 
 - Installing packages and libraries
